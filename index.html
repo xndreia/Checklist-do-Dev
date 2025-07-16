@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8">
+  <title>Checklist Diário Personalizado</title>
+  <style>
+    body {
+      background-color: #0f172a;
+      color: #e2e8f0;
+      font-family: Arial, sans-serif;
+      padding: 30px;
+      max-width: 600px;
+      margin: auto;
+    }
+
+    h1 {
+      color: #38bdf8;
+      text-align: center;
+    }
+
+    .input-container {
+      display: flex;
+      margin-bottom: 20px;
+    }
+
+    input[type="text"] {
+      flex: 1;
+      padding: 10px;
+      font-size: 16px;
+      border-radius: 6px 0 0 6px;
+      border: none;
+    }
+
+    button.adicionar {
+      background-color: #38bdf8;
+      color: white;
+      padding: 10px 15px;
+      font-size: 16px;
+      border: none;
+      border-radius: 0 6px 6px 0;
+      cursor: pointer;
+    }
+
+    .tarefa {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background-color: #1e293b;
+      padding: 10px 15px;
+      margin-bottom: 10px;
+      border-radius: 8px;
+    }
+
+    .tarefa input[type="checkbox"] {
+      margin-right: 10px;
+      accent-color: #ec4899;
+    }
+
+    .tarefa span {
+      flex: 1;
+    }
+
+    .remover-btn {
+      background: none;
+      border: none;
+      color: #f87171;
+      font-size: 20px;
+      cursor: pointer;
+    }
+
+    .resetar {
+      display: block;
+      margin: 30px auto 0;
+      background-color: #f87171;
+      border: none;
+      color: white;
+      padding: 10px 20px;
+      border-radius: 8px;
+      font-size: 16px;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <h1>📋 Meu Checklist Diário</h1>
+
+  <div class="input-container">
+    <input type="text" id="novaTarefa" placeholder="Nova tarefa...">
+    <button class="adicionar" onclick="adicionarTarefa()">➕ Adicionar</button>
+  </div>
+
+  <div id="listaTarefas"></div>
+
+  <button class="resetar" onclick="resetarTudo()">🔁 Resetar tudo</button>
+
+  <script>
+    let tarefas = [];
+
+    function salvarTarefas() {
+      localStorage.setItem('tarefas', JSON.stringify(tarefas));
+    }
+
+    function carregarTarefas() {
+      const salvas = JSON.parse(localStorage.getItem('tarefas')) || [];
+      tarefas = salvas;
+      renderizarTarefas();
+    }
+
+    function adicionarTarefa() {
+      const input = document.getElementById('novaTarefa');
+      const texto = input.value.trim();
+      if (texto === "") return;
+
+      const nova = {
+        id: Date.now(),
+        texto,
+        feito: false
+      };
+      tarefas.push(nova);
+      salvarTarefas();
+      renderizarTarefas();
+      input.value = "";
+    }
+
+    function alternarFeito(id) {
+      tarefas = tarefas.map(t => t.id === id ? {...t, feito: !t.feito} : t);
+      salvarTarefas();
+    }
+
+    function removerTarefa(id) {
+      tarefas = tarefas.filter(t => t.id !== id);
+      salvarTarefas();
+      renderizarTarefas();
+    }
+
+    function resetarTudo() {
+      if (confirm("Tem certeza que deseja limpar todas as tarefas?")) {
+        tarefas = [];
+        salvarTarefas();
+        renderizarTarefas();
+      }
+    }
+
+    function renderizarTarefas() {
+      const lista = document.getElementById('listaTarefas');
+      lista.innerHTML = "";
+
+      tarefas.forEach(tarefa => {
+        const div = document.createElement('div');
+        div.className = "tarefa";
+
+        const checkbox = document.createElement('input');
+        checkbox.type = "checkbox";
+        checkbox.checked = tarefa.feito;
+        checkbox.onchange = () => {
+          alternarFeito(tarefa.id);
+        };
+
+        const texto = document.createElement('span');
+        texto.textContent = tarefa.texto;
+
+        const btnRemover = document.createElement('button');
+        btnRemover.className = "remover-btn";
+        btnRemover.textContent = "❌";
+        btnRemover.onclick = () => removerTarefa(tarefa.id);
+
+        div.appendChild(checkbox);
+        div.appendChild(texto);
+        div.appendChild(btnRemover);
+
+        lista.appendChild(div);
+      });
+    }
+
+    carregarTarefas();
+  </script>
+</body>
+</html>
