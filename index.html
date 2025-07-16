@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8">
+  <title>Checklist Diário do Dev</title>
+  <style>
+    :root {
+      --bg: #0f172a;
+      --text: #e2e8f0;
+      --card: #1e293b;
+      --primary: #38bdf8;
+      --reset: #f87171;
+    }
+
+    .light {
+      --bg: #f8fafc;
+      --text: #0f172a;
+      --card: #e2e8f0;
+      --primary: #0ea5e9;
+      --reset: #ef4444;
+    }
+
+    body {
+      background-color: var(--bg);
+      color: var(--text);
+      font-family: Arial, sans-serif;
+      padding: 30px;
+      max-width: 600px;
+      margin: auto;
+      transition: background 0.3s, color 0.3s;
+    }
+
+    h1 {
+      color: var(--primary);
+      text-align: center;
+      margin-bottom: 20px;
+    }
+
+    .tarefa {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 10px;
+      background: var(--card);
+      padding: 10px 15px;
+      border-radius: 8px;
+    }
+
+    .tarefa span {
+      flex-grow: 1;
+      margin-left: 10px;
+    }
+
+    input[type="checkbox"] {
+      width: 18px;
+      height: 18px;
+      cursor: pointer;
+    }
+
+    input[type="text"] {
+      padding: 8px;
+      width: 70%;
+      border-radius: 6px;
+      border: none;
+    }
+
+    button {
+      padding: 10px 20px;
+      font-size: 16px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      background-color: var(--primary);
+      color: white;
+    }
+
+    button.reset {
+      background-color: var(--reset);
+      margin-top: 10px;
+      display: block;
+      margin-left: auto;
+      margin-right: auto;
+    }
+
+    button.adicionar {
+      margin-left: 10px;
+    }
+
+    .btn-remover {
+      background: transparent;
+      color: var(--reset);
+      font-size: 18px;
+      border: none;
+      cursor: pointer;
+    }
+
+    .add-container {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+
+    .theme-toggle {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      background: none;
+      border: 2px solid var(--primary);
+      color: var(--primary);
+      padding: 5px 10px;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+
+  <button class="theme-toggle" onclick="alternarTema()">🌗 Tema</button>
+
+  <h1>📋 Meu Checklist Diário</h1>
+
+  <div class="add-container">
+    <input type="text" id="nova-tarefa" placeholder="Nova tarefa...">
+    <button class="adicionar" onclick="adicionarTarefa()">➕ Adicionar</button>
+  </div>
+
+  <div id="lista-tarefas"></div>
+
+  <button class="reset" onclick="resetarChecklist()">🔁 Resetar tudo</button>
+
+  <script>
+    const lista = document.getElementById('lista-tarefas');
+
+    function carregarChecklist() {
+      const salvo = JSON.parse(localStorage.getItem('checklist-dev')) || { tarefas: [], status: {} };
+      const { tarefas, status } = salvo;
+
+      lista.innerHTML = "";
+
+      tarefas.forEach((tarefa, i) => {
+        const div = document.createElement('div');
+        div.className = 'tarefa';
+
+        const checkbox = document.createElement('input');
+        checkbox.type = 'checkbox';
+        checkbox.checked = status[i] || false;
+        checkbox.onchange = () => {
+          status[i] = checkbox.checked;
+          salvarDados(tarefas, status);
+        };
+
+        const texto = document.createElement('span');
+        texto.textContent = tarefa;
+
+        const btnRemover = document.createElement('button');
+        btnRemover.textContent = '❌';
+        btnRemover.className = 'btn-remover';
+        btnRemover.onclick = () => {
+          tarefas.splice(i, 1);
+          delete status[i];
+          salvarDados(tarefas, status);
+          carregarChecklist();
+        };
+
+        div.appendChild(checkbox);
+        div.appendChild(texto);
+        div.appendChild(btnRemover);
+        lista.appendChild(div);
+      });
+    }
+
+    function adicionarTarefa() {
+      const input = document.getElementById('nova-tarefa');
+      const nova = input.value.trim();
+      if (nova === "") return;
+
+      const salvo = JSON.parse(localStorage.getItem('checklist-dev')) || { tarefas: [], status: {} };
+      salvo.tarefas.push(nova);
+      salvo.status[salvo.tarefas.length - 1] = false;
+
+      salvarDados(salvo.tarefas, salvo.status);
+      input.value = "";
+      carregarChecklist();
+    }
+
+    function salvarDados(tarefas, status) {
+      localStorage.setItem('checklist-dev', JSON.stringify({ tarefas, status }));
+    }
+
+    function resetarChecklist() {
+      if (confirm("Tem certeza que deseja apagar todas as tarefas?")) {
+        localStorage.removeItem('checklist-dev');
+        carregarChecklist();
+      }
+    }
+
+    function alternarTema() {
+      const modoAtual = document.body.classList.contains('light') ? 'light' : 'dark';
+      const novoModo = modoAtual === 'light' ? 'dark' : 'light';
+      document.body.classList.toggle('light');
+      localStorage.setItem('modo-tema', novoModo);
+    }
+
+    function aplicarTemaSalvo() {
+      const tema = localStorage.getItem('modo-tema');
+      if (tema === 'light') {
+        document.body.classList.add('light');
+      }
+    }
+
+    aplicarTemaSalvo();
+    carregarChecklist();
+  </script>
+
+</body>
+</html>
