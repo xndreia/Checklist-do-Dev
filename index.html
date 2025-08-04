@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8">
+  <title>Checklist Diário</title>
+
+  <!-- Link do Font Awesome -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+
+  <style>
+    html, body {
+      height: 100%;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      background-color: #0f172a;
+      color: #e2e8f0;
+      font-family: Arial, sans-serif;
+    }
+
+    main {
+      flex: 1; /* faz o conteúdo ocupar o espaço antes do rodapé */
+      padding: 30px;
+      max-width: 700px;
+      margin: auto;
+      width: 100%;
+    }
+
+    h1 {
+      color: #38bdf8;
+      text-align: center;
+    }
+
+    .input-container {
+      display: flex;
+      margin-bottom: 20px;
+    }
+
+    input[type="text"] {
+      flex: 1;
+      padding: 10px;
+      font-size: 16px;
+      border-radius: 6px 0 0 6px;
+      border: none;
+    }
+
+    button.adicionar {
+      background-color: #38bdf8;
+      color: white;
+      padding: 10px 15px;
+      font-size: 16px;
+      border: none;
+      border-radius: 0 6px 6px 0;
+      cursor: pointer;
+    }
+
+    .tarefa {
+      display: flex;
+      flex-direction: column;
+      background-color: #1e293b;
+      padding: 10px 15px;
+      margin-bottom: 10px;
+      border-radius: 8px;
+    }
+
+    .linha {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .linha input[type="checkbox"] {
+      margin-right: 10px;
+      accent-color: #ec4899;
+    }
+
+    .linha span {
+      flex: 1;
+    }
+
+    .remover-btn {
+      background: none;
+      border: none;
+      color: #f87171;
+      font-size: 20px;
+      cursor: pointer;
+      margin-left: 10px;
+    }
+
+    .datas {
+      font-size: 12px;
+      color: #94a3b8;
+      margin-top: 5px;
+      padding-left: 25px;
+    }
+
+    .resetar {
+      display: block;
+      margin: 30px auto 0;
+      background-color: #f87171;
+      border: none;
+      color: white;
+      padding: 10px 20px;
+      border-radius: 8px;
+      font-size: 16px;
+      cursor: pointer;
+    }
+
+    /* Rodapé com redes sociais */
+    footer {
+      padding: 20px 0;
+      text-align: center;
+      border-top: 1px solid #334155;
+    }
+
+    .icons a {
+      margin: 0 15px;
+      font-size: 30px;
+      transition: transform 0.3s ease;
+    }
+
+    .icons a:hover {
+      transform: scale(1.2);
+    }
+  </style>
+</head>
+<body>
+
+  <main>
+    <h1>📋 Meu Checklist Diário</h1>
+
+    <div class="input-container">
+      <input
+        type="text"
+        id="novaTarefa"
+        placeholder="Nova tarefa..."
+        onkeydown="if(event.key==='Enter'){ adicionarTarefa(); }"
+      >
+      <button class="adicionar" onclick="adicionarTarefa()">➕ Adicionar</button>
+    </div>
+
+    <div id="listaTarefas"></div>
+
+    <button class="resetar" onclick="resetarTudo()">🔁 Resetar tudo</button>
+  </main>
+
+  <!-- Rodapé com redes sociais -->
+  <footer>
+    <div class="icons">
+      <a href="https://wa.me/5551980133727" style="color:#25d366;" target="_blank"><i class="fa-brands fa-whatsapp"></i></a>
+      <a href="https://www.tiktok.com/@eiiiandreia" style="color:#00f2ea;" target="_blank"><i class="fa-brands fa-tiktok"></i></a>
+      <a href="https://www.instagram.com/jxpters" style="color:#fd1d1d;" target="_blank"><i class="fa-brands fa-instagram"></i></a>
+    </div>
+  </footer>
+
+  <script>
+    let tarefas = [];
+
+    function formatarDataHora(data) {
+      return new Date(data).toLocaleString('pt-BR');
+    }
+
+    function salvarTarefas() {
+      localStorage.setItem('tarefas', JSON.stringify(tarefas));
+    }
+
+    function carregarTarefas() {
+      tarefas = JSON.parse(localStorage.getItem('tarefas')) || [];
+      renderizarTarefas();
+    }
+
+    function adicionarTarefa() {
+      const input = document.getElementById('novaTarefa');
+      const texto = input.value.trim();
+      if (texto === "") return;
+
+      const nova = {
+        id: Date.now(),
+        texto,
+        feito: false,
+        criadoEm: new Date().toISOString(),
+        concluidoEm: null
+      };
+
+      tarefas.push(nova);
+      salvarTarefas();
+      renderizarTarefas();
+      input.value = "";
+    }
+
+    function alternarFeito(id) {
+      tarefas = tarefas.map(t => {
+        if (t.id === id) {
+          const atualizado = {
+            ...t,
+            feito: !t.feito,
+            concluidoEm: !t.feito ? new Date().toISOString() : null
+          };
+          return atualizado;
+        }
+        return t;
+      });
+      salvarTarefas();
+      renderizarTarefas();
+    }
+
+    function removerTarefa(id) {
+      tarefas = tarefas.filter(t => t.id !== id);
+      salvarTarefas();
+      renderizarTarefas();
+    }
+
+    function resetarTudo() {
+      if (confirm("Tem certeza que deseja apagar todas as tarefas?")) {
+        tarefas = [];
+        salvarTarefas();
+        renderizarTarefas();
+      }
+    }
+
+    function renderizarTarefas() {
+      const lista = document.getElementById('listaTarefas');
+      lista.innerHTML = "";
+
+      tarefas.forEach(tarefa => {
+        const div = document.createElement('div');
+        div.className = "tarefa";
+
+        const linha = document.createElement('div');
+        linha.className = "linha";
+
+        const checkbox = document.createElement('input');
+        checkbox.type = "checkbox";
+        checkbox.checked = tarefa.feito;
+        checkbox.onchange = () => alternarFeito(tarefa.id);
+
+        const texto = document.createElement('span');
+        texto.textContent = tarefa.texto;
+
+        const btnRemover = document.createElement('button');
+        btnRemover.className = "remover-btn";
+        btnRemover.textContent = "❌";
+        btnRemover.onclick = () => removerTarefa(tarefa.id);
+
+        linha.appendChild(checkbox);
+        linha.appendChild(texto);
+        linha.appendChild(btnRemover);
+
+        const datas = document.createElement('div');
+        datas.className = "datas";
+        datas.innerHTML = `🕒 Criada em: ${formatarDataHora(tarefa.criadoEm)}<br>`;
+        if (tarefa.feito && tarefa.concluidoEm) {
+          datas.innerHTML += `✅ Concluída em: ${formatarDataHora(tarefa.concluidoEm)}`;
+        }
+
+        div.appendChild(linha);
+        div.appendChild(datas);
+        lista.appendChild(div);
+      });
+    }
+
+    carregarTarefas();
+  </script>
+</body>
+</html>
